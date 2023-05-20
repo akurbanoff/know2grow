@@ -1,15 +1,15 @@
 from typing import Optional, Union
-
+from fastapi.responses import JSONResponse
 from fastapi import Depends
 from fastapi_users import IntegerIDMixin, BaseUserManager, InvalidPasswordException, schemas, models
 from starlette import exceptions
 from starlette.requests import Request
 from starlette.responses import Response
-
 from src.auth.models import User
 from src.auth.schemas import UserCreate
 from src.config import SECRET
 from src.utils import get_user_db
+import hashlib
 
 
 class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
@@ -37,6 +37,17 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
                 reason='Пароль должен содержать символы как в нижнем, так и в верхнем регистре.'
             )
 
+    async def forgot_password(
+        self, user: models.UP, request: Optional[Request] = None
+    ):
+        new_password = ''
+        if user.email == User.email:
+            new_password = 'Qwerty6'
+            User.hashed_password = new_password
+
+        return new_password
+
+
     async def create(
         self,
         user_create: schemas.UC,
@@ -55,7 +66,7 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
             else user_create.create_update_dict_superuser()
         )
         password = user_dict.pop("password")
-        user_dict["password"] = self.password_helper.hash(password)
+        user_dict["hashed_password"] = self.password_helper.hash(password)
 
         created_user = await self.user_db.create(user_dict)
 
