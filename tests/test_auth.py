@@ -11,3 +11,9 @@ def test_registration():
     response = client.post(url='/auth/register', json=data)#json=json.dumps(data))
 
     assert response.status_code == 201
+
+
+def test_some():
+    a = 1
+
+    assert a == 1
