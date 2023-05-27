@@ -5,5 +5,10 @@ __pycache__
 .pytest_cache
 .env
 actual_work_info.md
+client_secret_1079250209238-ugnen9qhn3f7s43cl1ur0tigqdcinimg.apps.googleusercontent.com.json
+alembic.ini
+/migrations/
+pyproject.toml
+src/google_drive/token_drive_v3.pickle
 # Project exclude paths
 /venv/

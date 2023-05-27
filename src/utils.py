@@ -5,7 +5,7 @@ from src.auth.models import User
 from src.database import get_async_session
 
 
-#from src.oauth import OAuthAccount
+from src.auth.models import OAuthAccount
 
 
 async def get_user_db(session: AsyncSession = Depends(get_async_session)):
