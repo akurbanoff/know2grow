@@ -17,6 +17,11 @@ CRYPTO_PANIC_API = os.environ.get("CRYPTO_PANIC_API")
 BINANCE_API = os.environ.get('BINANCE_API')
 BINANCE_SECRET_KEY = os.environ.get('BINANCE_SECRET_KEY')
 
+KNOW2GROW_SMTP_PASS = os.environ.get('KNOW2GROW_SMTP_PASS')
+SMTP_HOST = os.environ.get('SMTP_HOST')
+SMTP_PORT = os.environ.get('SMTP_PORT')
+SMTP_USER = os.environ.get('SMTP_USER')
+
 TEST_DB_USER = os.environ.get('TEST_DB_USER')
 TEST_DB_PASS = os.environ.get('TEST_DB_PASS')
 TEST_DB_HOST = os.environ.get('TEST_DB_HOST')

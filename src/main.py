@@ -1,3 +1,5 @@
+import time
+
 import uvicorn
 from fastapi import FastAPI, Depends, UploadFile, File
 from fastapi_users import InvalidPasswordException
@@ -17,12 +19,23 @@ import bcrypt
 import requests
 import datetime
 from src.google_drive.google_api import GoogleDrive
+from redis import asyncio as aioredis
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+from fastapi_cache.decorator import cache
 
 
 app = FastAPI(
     title='know2grow',
     version='0.0.1'
 )
+
+
+@app.on_event('startup')
+async def take_redis():
+    redis = aioredis.from_url("redis://localhost", encoding="utf8", decode_responses=True)
+    FastAPICache.init(RedisBackend(redis), prefix='fastapi-cache')
+
 
 app.include_router(
     auth_router.get_auth_router(auth_backend),
@@ -114,14 +127,27 @@ async def get_crypto_news(get_all: bool = False, currency: str = None, get_by_ta
     data = response.json()
     return data
 
+
 @app.post('/oauth2')
 async def oauth2_authenticate():
     drive = GoogleDrive().create_drive()
+    return drive
+
 
 @app.post('/add_photo')
-async def add_photo(file: UploadFile):
+async def add_photo(file: UploadFile = File(...)):#, drive: GoogleDrive = Depends(oauth2_authenticate)):
     filename = file.filename
-    mime_type = file.content_type
+    mime_type = GoogleDrive.mime_types.get(os.path.splitext(filename)[1], 'application/octet-stream') #file.content_type
+    file_content = await file.read()
+    folder_id = '1Swr1jDm1x8aHnMglfzzAaW-dG96qGCen'
+    #print(filename, mime_type, file_content)
+    try:
+        GoogleDrive.upload_files(filename=filename, mime_type=mime_type, file_content=file_content, folder_id=folder_id)
+    except Exception as ex:
+        return ex
+
+    return 200
+
 
 @app.post('/add_new_edu_info')
 async def add_new_edu_info(title: str, links: str, summary: str, photo):
