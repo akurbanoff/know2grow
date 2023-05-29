@@ -10,6 +10,7 @@ from src.auth.schemas import UserRead, UserUpdate, UserCreate
 from src.config import CRYPTO_PANIC_API, BINANCE_API, BINANCE_SECRET_KEY
 #from src.auth.models import google_oauth_client, oauth_scheme
 from src.auth.manager import UserManager
+from src.file_work import FileWork
 from src.utils import get_user_db
 from fastapi.responses import JSONResponse
 from src.database import session
@@ -34,6 +35,12 @@ app = FastAPI(
 )
 
 
+@app.on_event('startup')
+async def take_redis():
+    redis = aioredis.from_url("redis://localhost", encoding="utf8", decode_responses=True)
+    FastAPICache.init(RedisBackend(redis), prefix='fastapi-cache')
+
+
 async def create_binance_client():
     binance_client = await AsyncClient.create(api_key=BINANCE_API, api_secret=BINANCE_SECRET_KEY)
     return binance_client
@@ -50,8 +57,7 @@ async def process_message(msg):
 
 
 @app.get('/socket_binance')
-async def socket_binance(currency: str, binance_manager: BinanceSocketManager = Depends(create_binance_manager),
-                         binance_client: AsyncClient = Depends(create_binance_client)):
+async def socket_binance(currency: str, binance_manager: BinanceSocketManager = Depends(create_binance_manager)):
     '''
     Сокет соединение с бинансом. Длится 60 секунд, но походу бесконечно.
     - currency: принимает валюту по которой запрашиваются данные в формате тикера - BTCUSDT, ETHUSDT
@@ -77,13 +83,6 @@ async def socket_binance(currency: str, binance_manager: BinanceSocketManager = 
             res = await tscm.recv()
             return res
 
-    await binance_client.close_connection()
-
-
-@app.on_event('startup')
-async def take_redis():
-    redis = aioredis.from_url("redis://localhost", encoding="utf8", decode_responses=True)
-    FastAPICache.init(RedisBackend(redis), prefix='fastapi-cache')
 
 
 app.include_router(
@@ -200,30 +199,35 @@ async def get_crypto_news(get_all: bool = False, currency: str = None, get_by_ta
     return data
 
 
-@app.post('/oauth2')
-async def oauth2_authenticate():
-    drive = GoogleDrive().create_drive()
-    return drive
+# @app.post('/oauth2')
+# async def oauth2_authenticate():
+#     drive = GoogleDrive().create_drive()
+#     return drive
 
 
 @app.post('/add_photo')
 async def add_photo(file: UploadFile = File(...)):#, drive: GoogleDrive = Depends(oauth2_authenticate)):
-    filename = file.filename
-    mime_type = GoogleDrive.mime_types.get(os.path.splitext(filename)[1], 'application/octet-stream') #file.content_type
-    file_content = await file.read()
-    folder_id = '1Swr1jDm1x8aHnMglfzzAaW-dG96qGCen'
-    #print(filename, mime_type, file_content)
-    try:
-        GoogleDrive.upload_files(filename=filename, mime_type=mime_type, file_content=file_content, folder_id=folder_id)
-    except Exception as ex:
-        return ex
+    file_work = FileWork()
+    file_work.create_file(file=file)
 
-    return 200
+    return 201
+
+@app.get('/get_photo')
+async def get_photo(file: UploadFile = File(...)):
+    file_work = FileWork()
+    return file_work.get_file(filename=file.filename)
+
+
 
 
 @app.post('/add_new_edu_info')
 async def add_new_edu_info(title: str, links: str, summary: str, photo):
     pass
+
+
+@app.on_event('shutdown')
+async def shutdown(binance_client=Depends(create_binance_client)):
+    await binance_client.close_connection()
 
 
 if __name__ == "__main__":
