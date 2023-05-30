@@ -13,9 +13,9 @@ from src.auth.manager import UserManager
 from src.file_work import FileWork
 from src.utils import get_user_db
 from fastapi.responses import JSONResponse
-from src.database import session
-from sqlalchemy import select, update
-from src.auth.models import User
+from src.database import session, engine
+from sqlalchemy import select, update, insert
+from src.auth.models import User, PostClass
 from passlib.hash import bcrypt
 import bcrypt
 import requests
@@ -27,6 +27,9 @@ from fastapi_cache.backends.redis import RedisBackend
 from fastapi_cache.decorator import cache
 from binance import AsyncClient
 from binance.streams import BinanceSocketManager
+
+
+cats_status_code_url = 'https://http.cat/'
 
 
 app = FastAPI(
@@ -41,26 +44,27 @@ async def take_redis():
     FastAPICache.init(RedisBackend(redis), prefix='fastapi-cache')
 
 
-async def create_binance_client():
-    binance_client = await AsyncClient.create(api_key=BINANCE_API, api_secret=BINANCE_SECRET_KEY)
-    return binance_client
-
-
-async def create_binance_manager(binance_client= Depends(create_binance_client)):
-    binance_manager = BinanceSocketManager(binance_client, user_timeout=60)
-
-    return binance_manager
+# async def create_binance_client():
+#     binance_client = await AsyncClient.create(api_key=BINANCE_API, api_secret=BINANCE_SECRET_KEY)
+#     return binance_client
+#
+#
+# async def create_binance_manager(binance_client = Depends(create_binance_client)):
+#     binance_manager = BinanceSocketManager(binance_client, user_timeout=60)
+#
+#     return binance_manager
 
 
 async def process_message(msg):
     return msg
 
 
-@app.get('/socket_binance')
-async def socket_binance(currency: str, binance_manager: BinanceSocketManager = Depends(create_binance_manager)):
+@app.get('/socket_binance', tags=['Chart'])
+async def socket_binance(currency: str, stop: bool = False):
     '''
     Сокет соединение с бинансом. Длится 60 секунд, но походу бесконечно.
     - currency: принимает валюту по которой запрашиваются данные в формате тикера - BTCUSDT, ETHUSDT
+    - stop: true - закрыть соединение, false - открыть. Можно реализовать логику, если клиент покидает этот uri то закрывать соединение.
 
     Возвращает данные в формате:
     {
@@ -77,12 +81,18 @@ async def socket_binance(currency: str, binance_manager: BinanceSocketManager = 
       "M": true - флаг maker: true - если покупатель является создателем спроса (maker), и false - если покупатель является исполнителем заявки (taker).
     }
     '''
-    ts = binance_manager.trade_socket(symbol=currency)
-    async with ts as tscm:
-        while True:
-            res = await tscm.recv()
-            return res
+    binance_client = await AsyncClient.create(api_key=BINANCE_API, api_secret=BINANCE_SECRET_KEY)
+    binance_manager = BinanceSocketManager(binance_client, user_timeout=60)
 
+    ts = binance_manager.trade_socket(symbol=currency)
+    if not stop:
+        async with ts as tscm:
+            while True:
+                res = await tscm.recv()
+                return res
+    else:
+        await binance_client.close_connection()
+        return 200
 
 
 app.include_router(
@@ -118,7 +128,7 @@ current_user = auth_router.current_user()
 #     tags=["Auth"],
 # )
 
-@app.post('/auth/change_password')
+@app.post('/auth/change_password', tags=['Auth'])
 async def change_password(email: str, new_password: str):
     '''
     Смена пароля с хэшированием.
@@ -155,12 +165,10 @@ async def change_password(email: str, new_password: str):
         await conn.execute(stmt)
         await conn.commit()
 
-    return JSONResponse(content={
-        'result': 'OK'
-    })
+    return requests.get(url=f'{cats_status_code_url}200')
 
 
-@app.get('/get_crypto_news')
+@app.get('/get_crypto_news', tags=['News'])
 async def get_crypto_news(get_all: bool = False, currency: str = None, get_by_tag: str = None,
                           get_from_to: datetime.datetime = None, user=Depends(current_user)):
     '''
@@ -205,29 +213,27 @@ async def get_crypto_news(get_all: bool = False, currency: str = None, get_by_ta
 #     return drive
 
 
-@app.post('/add_photo')
-async def add_photo(file: UploadFile = File(...)):#, drive: GoogleDrive = Depends(oauth2_authenticate)):
+@app.post('/add_photo', tags=['Posts'])
+async def add_photo(file: UploadFile = File(...), filename: str = ''):#, drive: GoogleDrive = Depends(oauth2_authenticate)):
     file_work = FileWork()
-    file_work.create_file(file=file)
+    file_work.create_file(file=file, filename=filename)
 
-    return 201
+    return requests.get(url=f'{cats_status_code_url}201')
 
-@app.get('/get_photo')
-async def get_photo(file: UploadFile = File(...)):
+@app.get('/get_photo', tags=['Posts'])
+async def get_photo(filename: str):
     file_work = FileWork()
-    return file_work.get_file(filename=file.filename)
+    return file_work.get_file(filename=filename)
 
 
+@app.post('/add_new_edu_info', tags=['Posts'])
+async def add_new_edu_info(title: str, links: str, summary: str):
+    async with engine.begin() as db:
+        stmt = insert(PostClass).values(title=title, links=links, summary=summary)
+        db.execute(stmt)
+        db.commit()
 
-
-@app.post('/add_new_edu_info')
-async def add_new_edu_info(title: str, links: str, summary: str, photo):
-    pass
-
-
-@app.on_event('shutdown')
-async def shutdown(binance_client=Depends(create_binance_client)):
-    await binance_client.close_connection()
+    return requests.get(url=f'{cats_status_code_url}200')
 
 
 if __name__ == "__main__":
