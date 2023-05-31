@@ -44,21 +44,6 @@ async def take_redis():
     FastAPICache.init(RedisBackend(redis), prefix='fastapi-cache')
 
 
-# async def create_binance_client():
-#     binance_client = await AsyncClient.create(api_key=BINANCE_API, api_secret=BINANCE_SECRET_KEY)
-#     return binance_client
-#
-#
-# async def create_binance_manager(binance_client = Depends(create_binance_client)):
-#     binance_manager = BinanceSocketManager(binance_client, user_timeout=60)
-#
-#     return binance_manager
-
-
-async def process_message(msg):
-    return msg
-
-
 @app.get('/socket_binance', tags=['Chart'])
 async def socket_binance(currency: str, stop: bool = False):
     '''
@@ -81,6 +66,7 @@ async def socket_binance(currency: str, stop: bool = False):
       "M": true - флаг maker: true - если покупатель является создателем спроса (maker), и false - если покупатель является исполнителем заявки (taker).
     }
     '''
+
     binance_client = await AsyncClient.create(api_key=BINANCE_API, api_secret=BINANCE_SECRET_KEY)
     binance_manager = BinanceSocketManager(binance_client, user_timeout=60)
 
@@ -128,6 +114,7 @@ current_user = auth_router.current_user()
 #     tags=["Auth"],
 # )
 
+
 @app.post('/auth/change_password', tags=['Auth'])
 async def change_password(email: str, new_password: str):
     '''
@@ -165,7 +152,8 @@ async def change_password(email: str, new_password: str):
         await conn.execute(stmt)
         await conn.commit()
 
-    return requests.get(url=f'{cats_status_code_url}200')
+    cats_response = requests.get(url=f'{cats_status_code_url}200')
+    return 200
 
 
 @app.get('/get_crypto_news', tags=['News'])
@@ -214,11 +202,13 @@ async def get_crypto_news(get_all: bool = False, currency: str = None, get_by_ta
 
 
 @app.post('/add_photo', tags=['Posts'])
-async def add_photo(file: UploadFile = File(...), filename: str = ''):#, drive: GoogleDrive = Depends(oauth2_authenticate)):
+async def add_photo(file: UploadFile = File(...), filename: str = ''):
     file_work = FileWork()
     file_work.create_file(file=file, filename=filename)
 
-    return requests.get(url=f'{cats_status_code_url}201')
+    cats_response = requests.get(url=f'{cats_status_code_url}201')
+    return 201
+
 
 @app.get('/get_photo', tags=['Posts'])
 async def get_photo(filename: str):
@@ -226,14 +216,48 @@ async def get_photo(filename: str):
     return file_work.get_file(filename=filename)
 
 
-@app.post('/add_new_edu_info', tags=['Posts'])
+@app.post('/add_new_edu_post', tags=['Posts'])
 async def add_new_edu_info(title: str, links: str, summary: str):
+    '''
+    Добавление новой статьи в бд.
+    - title: заголовок
+    - links: ссылки, которые использовались при написании статьи
+    - summary: основной текст
+    Возвращает код 201 если все успешно загрузилось.
+    '''
     async with engine.begin() as db:
         stmt = insert(PostClass).values(title=title, links=links, summary=summary)
-        db.execute(stmt)
-        db.commit()
+        await db.execute(stmt)
+        await db.commit()
 
-    return requests.get(url=f'{cats_status_code_url}200')
+    cats_response = requests.get(url=f'{cats_status_code_url}200')
+    return 201
+
+
+@app.get('/get_edu_posts', tags=["Posts"])
+async def get_edu_posts():
+    '''
+    Возвращает все посты, которые есть в базе в json формате, с полями:
+    - id
+    - title
+    - links
+    - summary
+    '''
+    async with engine.begin() as db:
+        stmt = select(PostClass).order_by(PostClass.id)
+        posts = await db.execute(stmt)
+        posts = posts.fetchall()
+
+    json_data = dict()
+    for post in posts:
+        json_data = {
+            'id': post[0],
+            'title': post[1],
+            'links': post[2],
+            'summary': post[3]
+        }
+
+    return json_data
 
 
 if __name__ == "__main__":
