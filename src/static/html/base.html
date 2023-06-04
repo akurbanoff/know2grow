@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{title}}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="./static/js/base.js"></script>
+</head>
+<body>
+<nav>
+{% for i in buttons %}
+    <p id="head"><a href="{{ i.url }}"><input id="input" type="button" value="{{ i.name }}"></a></p>
+{% endfor %}
+</nav>
+
+{% block content %}
+{% endblock %}
+
+</body>
+</html>

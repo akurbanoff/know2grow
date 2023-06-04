@@ -12,3 +12,4 @@ pyproject.toml
 src/google_drive/token_drive_v3.pickle
 # Project exclude paths
 /venv/
+/media/

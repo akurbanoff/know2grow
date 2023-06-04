@@ -1,35 +1,27 @@
-import os
-import time
 import uvicorn
-import asyncio
 from fastapi import FastAPI, Depends, UploadFile, File
 from fastapi_users import InvalidPasswordException
+from starlette.staticfiles import StaticFiles
+
 from src.auth.routers import router as auth_router
+from src.static.assets.text import cats_status_code_url
+from src.static.routers import router as template_router
+from src.crypto_news.routers import router as crypto_news_router
+from src.education.routers import router as education_router
+from src.binance.router import router as binance_router
+
 from src.auth.auth import auth_backend
-from src.auth.schemas import UserRead, UserUpdate, UserCreate
-from src.config import CRYPTO_PANIC_API, BINANCE_API, BINANCE_SECRET_KEY
-#from src.auth.models import google_oauth_client, oauth_scheme
-from src.auth.manager import UserManager
+from src.auth.schemas import UserRead, UserCreate
 from src.file_work import FileWork
-from src.utils import get_user_db
-from fastapi.responses import JSONResponse
 from src.database import session, engine
 from sqlalchemy import select, update, insert
 from src.auth.models import User, PostClass
 from passlib.hash import bcrypt
 import bcrypt
 import requests
-import datetime
-from src.google_drive.google_api import GoogleDrive
 from redis import asyncio as aioredis
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
-from fastapi_cache.decorator import cache
-from binance import AsyncClient
-from binance.streams import BinanceSocketManager
-
-
-cats_status_code_url = 'https://http.cat/'
 
 
 app = FastAPI(
@@ -37,48 +29,14 @@ app = FastAPI(
     version='0.0.1'
 )
 
+app.mount('/static', StaticFiles(directory='static'), name='static')
+
 
 @app.on_event('startup')
 async def take_redis():
     redis = aioredis.from_url("redis://localhost", encoding="utf8", decode_responses=True)
     FastAPICache.init(RedisBackend(redis), prefix='fastapi-cache')
 
-
-@app.get('/socket_binance', tags=['Chart'])
-async def socket_binance(currency: str, stop: bool = False):
-    '''
-    Сокет соединение с бинансом. Длится 60 секунд, но походу бесконечно.
-    - currency: принимает валюту по которой запрашиваются данные в формате тикера - BTCUSDT, ETHUSDT
-    - stop: true - закрыть соединение, false - открыть. Можно реализовать логику, если клиент покидает этот uri то закрывать соединение.
-
-    Возвращает данные в формате:
-    {
-      "e": "trade", - тип события, который указывает на тип транзакции.
-      "E": 1685352493842, -  время события в миллисекундах.
-      "s": "BTCUSDT", - символ пары торгов
-      "t": 3128786077, - ID сделки.
-      "p": "27892.87000000", - цена по которой произошла сделка.
-      "q": "0.00181000", - количество базовой валюты, которое было продано или куплено.
-      "b": 21277176651, - ID покупателя.
-      "a": 21277175869, - ID продавца.
-      "T": 1685352493842, - время выполнения операции в миллисекундах.
-      "m": false, - флаг режима: true - если сделка происходит за пределами стакана (вне очереди), и false - если сделка происходит внутри стакана.
-      "M": true - флаг maker: true - если покупатель является создателем спроса (maker), и false - если покупатель является исполнителем заявки (taker).
-    }
-    '''
-
-    binance_client = await AsyncClient.create(api_key=BINANCE_API, api_secret=BINANCE_SECRET_KEY)
-    binance_manager = BinanceSocketManager(binance_client, user_timeout=60)
-
-    ts = binance_manager.trade_socket(symbol=currency)
-    if not stop:
-        async with ts as tscm:
-            while True:
-                res = await tscm.recv()
-                return res
-    else:
-        await binance_client.close_connection()
-        return 200
 
 
 app.include_router(
@@ -93,7 +51,22 @@ app.include_router(
     tags=['Auth']
 )
 
-current_user = auth_router.current_user()
+app.include_router(
+    template_router
+)
+
+app.include_router(
+    crypto_news_router
+)
+
+app.include_router(
+    education_router
+)
+
+app.include_router(
+    binance_router
+)
+
 
 # app.include_router(
 #     auth_router.get_reset_password_router(),
@@ -156,51 +129,6 @@ async def change_password(email: str, new_password: str):
     return 200
 
 
-@app.get('/get_crypto_news', tags=['News'])
-async def get_crypto_news(get_all: bool = False, currency: str = None, get_by_tag: str = None,
-                          get_from_to: datetime.datetime = None, user=Depends(current_user)):
-    '''
-    Получает новости про криптовалюту и эту сферу в целом.
-
-    Параметры:
-    - get_all (bool): если значение True, то будут получены 100 последних новостей.
-    - currency (str): поиск по типу валюты. Вводите в формате BTC, ETH и тд.
-    - get_by_tag (str): ключевое слово для поиска.
-    - get_from_to (datatime): даты публикации новостей с какого-то числа и по какое-то число.
-
-    Примечание:
-    - Для использования некоторых параметров требуется авторизация пользователя.
-    - Функция возвращает список новостей.
-    '''
-    url = f'https://cryptopanic.com/api/v1/posts/?auth_token={CRYPTO_PANIC_API}'
-    response = None
-
-    if get_all:
-        response = requests.get(url=url)
-    else:
-        try:
-            if user.email:
-                if currency is not None:
-                    url = f'{url}&currencies={currency}'
-                    response = requests.get(url=url)
-                elif get_by_tag is not None:
-                    url = f'{url}&search={get_by_tag}'
-                    response = requests.get(url=url)
-        except Exception as ex:
-            return 'Скорее всего вы не вошли в аккаунт или вы ввели что то не так, попробуйте еще раз.'
-    # elif get_from_to is not None:
-    #     url = f'{url}&public=true&min_date=2022-05-01T00:00:00Z&max_date=2022-05-31T23:59:59Z'
-
-    data = response.json()
-    return data
-
-
-# @app.post('/oauth2')
-# async def oauth2_authenticate():
-#     drive = GoogleDrive().create_drive()
-#     return drive
-
-
 @app.post('/add_photo', tags=['Posts'])
 async def add_photo(file: UploadFile = File(...), filename: str = ''):
     file_work = FileWork()
@@ -214,50 +142,6 @@ async def add_photo(file: UploadFile = File(...), filename: str = ''):
 async def get_photo(filename: str):
     file_work = FileWork()
     return file_work.get_file(filename=filename)
-
-
-@app.post('/add_new_edu_post', tags=['Posts'])
-async def add_new_edu_info(title: str, links: str, summary: str):
-    '''
-    Добавление новой статьи в бд.
-    - title: заголовок
-    - links: ссылки, которые использовались при написании статьи
-    - summary: основной текст
-    Возвращает код 201 если все успешно загрузилось.
-    '''
-    async with engine.begin() as db:
-        stmt = insert(PostClass).values(title=title, links=links, summary=summary)
-        await db.execute(stmt)
-        await db.commit()
-
-    cats_response = requests.get(url=f'{cats_status_code_url}200')
-    return 201
-
-
-@app.get('/get_edu_posts', tags=["Posts"])
-async def get_edu_posts():
-    '''
-    Возвращает все посты, которые есть в базе в json формате, с полями:
-    - id
-    - title
-    - links
-    - summary
-    '''
-    async with engine.begin() as db:
-        stmt = select(PostClass).order_by(PostClass.id)
-        posts = await db.execute(stmt)
-        posts = posts.fetchall()
-
-    json_data = dict()
-    for post in posts:
-        json_data = {
-            'id': post[0],
-            'title': post[1],
-            'links': post[2],
-            'summary': post[3]
-        }
-
-    return json_data
 
 
 if __name__ == "__main__":
