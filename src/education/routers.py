@@ -1,7 +1,7 @@
 import requests
-from fastapi import APIRouter
-from sqlalchemy import insert, select
-
+from fastapi import APIRouter, File, UploadFile
+from sqlalchemy import insert, select, LargeBinary
+from src.file_work import FileWork
 from src.auth.models import PostClass
 from src.database import engine
 from src.static.assets.text import cats_status_code_url
@@ -11,7 +11,7 @@ router = APIRouter(
 )
 
 @router.post('/add_new_edu_post')
-async def add_new_edu_info(title: str, links: str, summary: str):
+async def add_new_edu_info(title: str, links: str, summary: str, photo: UploadFile = File(...)):
     '''
     Добавление новой статьи в бд.
     - title: заголовок
@@ -19,8 +19,9 @@ async def add_new_edu_info(title: str, links: str, summary: str):
     - summary: основной текст
     Возвращает код 201 если все успешно загрузилось.
     '''
+
     async with engine.begin() as db:
-        stmt = insert(PostClass).values(title=title, links=links, summary=summary)
+        stmt = insert(PostClass).values(title=title, links=links, summary=summary, photo=photo.file.read())
         await db.execute(stmt)
         await db.commit()
 
@@ -48,7 +49,8 @@ async def get_edu_posts():
             'id': post[0],
             'title': post[1],
             'links': post[2],
-            'summary': post[3]
+            'summary': post[3],
+            'photo': post[4]
         }
 
     return json_data

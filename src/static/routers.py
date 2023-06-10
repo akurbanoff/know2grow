@@ -15,7 +15,7 @@ router = APIRouter(
 templates = Jinja2Templates(directory='./static/html')
 
 
-@router.get('/main')
+@router.get('/')
 def get_main_temp(request: Request):
     return templates.TemplateResponse('main.html', {'request': request, 'title': 'Главная страница', 'buttons': buttons})
 
@@ -40,4 +40,4 @@ def get_edu_temp(request: Request, edu_posts = Depends(get_edu_posts)):
 
 @router.post('/auth/register')
 def get_reg_temp(request: Request):
-    return templates.TemplateResponse('')
+    return templates.TemplateResponse('register.html', {'request': request, 'title': 'Регистрация', 'buttons': buttons})

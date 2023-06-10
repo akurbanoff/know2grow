@@ -7,11 +7,13 @@
     <script src="./static/js/base.js"></script>
 </head>
 <body>
-<nav>
+<nav class="container">
 {% for i in buttons %}
-    <p id="head"><a href="{{ i.url }}"><input id="input" type="button" value="{{ i.name }}"></a></p>
+    <p class="button" style="display: inline-block;"><a href="{{ i.url }}"><input id="input" type="button" value="{{ i.name }}"></a></p>
 {% endfor %}
 </nav>
+
+<h1 style="text-align: center;">{{ title }}</h1>
 
 {% block content %}
 {% endblock %}

@@ -2,7 +2,7 @@ from typing import List
 
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, String, Integer, BINARY
+from sqlalchemy import Column, String, Integer, BINARY, LargeBinary
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTable
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseOAuthAccountTable
 from sqlalchemy import Column, Integer, ForeignKey
@@ -39,3 +39,12 @@ class PostClass(Base):
     title = Column(String)
     links = Column(String)
     summary = Column(String)
+    photo = Column(LargeBinary)
+
+
+class Admin(Base):
+    __tablename__ = 'admin'
+
+    id = Column(Integer, primary_key=True)
+    login = Column(String, unique=True)
+    password = Column(String, unique=True)
