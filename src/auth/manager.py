@@ -2,6 +2,7 @@ from typing import Optional, Union
 from fastapi.responses import JSONResponse
 from fastapi import Depends
 from fastapi_users import IntegerIDMixin, BaseUserManager, InvalidPasswordException, schemas, models
+from httpx_oauth.clients.google import GoogleOAuth2
 from starlette import exceptions
 from starlette.requests import Request
 from starlette.responses import Response
@@ -11,6 +12,11 @@ from src.config import SECRET
 from src.utils import get_user_db
 import hashlib
 from src.background_tasks import send_hello_to_new_user
+
+google_oauth_client = GoogleOAuth2(
+    client_secret='client_secret_1079250209238-ugnen9qhn3f7s43cl1ur0tigqdcinimg.apps.googleusercontent.com.json',
+    client_id='1079250209238-ugnen9qhn3f7s43cl1ur0tigqdcinimg.apps.googleusercontent.com'
+)
 
 
 class UserManager(IntegerIDMixin, BaseUserManager[User, int]):

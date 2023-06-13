@@ -5,7 +5,7 @@ __pycache__
 .pytest_cache
 .env
 actual_work_info.md
-src/google_drive/client_secret_1079250209238-ugnen9qhn3f7s43cl1ur0tigqdcinimg.apps.googleusercontent.com.json
+src/auth/client_secret_1079250209238-ugnen9qhn3f7s43cl1ur0tigqdcinimg.apps.googleusercontent.com.json
 src/google_drive/know2grow-secret-key.json
 alembic.ini
 /migrations/

@@ -37,3 +37,5 @@ class Drive:
                 files[file.name] = file
 
         return files
+
+drive = Drive()

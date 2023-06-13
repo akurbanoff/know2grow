@@ -9,5 +9,5 @@ from src.auth.models import OAuthAccount
 
 
 async def get_user_db(session: AsyncSession = Depends(get_async_session)):
-    yield SQLAlchemyUserDatabase(session, User)#, OAuthAccount)
+    yield SQLAlchemyUserDatabase(session, User, OAuthAccount)
 

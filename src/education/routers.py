@@ -4,7 +4,7 @@ from sqlalchemy import insert, select, LargeBinary
 from src.file_work import FileWork
 from src.auth.models import PostClass
 from src.database import engine
-from src.google_drive.google_api import Drive
+from src.google_drive.google_api import Drive, drive
 from src.static.assets.text import cats_status_code_url
 
 router = APIRouter(
@@ -58,7 +58,6 @@ async def get_edu_posts():
 
 @router.post('/upload_file')
 async def upload_file(file: UploadFile = File(...)):
-    drive = Drive()
     drive.upload_file(file=file, name=file.filename, mime_type=file.content_type)
     # file_work = FileWork()
     # file_work.create_file(file=file, filename=file.filename)
@@ -69,11 +68,11 @@ async def upload_file(file: UploadFile = File(...)):
 
 @router.get('/get_file')
 async def get_file(filename: str):
-    drive = Drive()
-    return drive.get_file_by_name(name=filename)
+    response = drive.get_file_by_name(name=filename)
+    return response
 
 
 @router.get('/get_all_files')
 async def get_all_files():
-    drive = Drive()
-    return drive.get_all_files()
+    response = drive.get_all_files()
+    return response
