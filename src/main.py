@@ -203,27 +203,27 @@ async def change_password(email: str, new_password: str):
     return 200
 
 
-@app.post('/upload_file', tags=['Posts'])
-async def upload_file(file: UploadFile = File(...)):
-    drive = Drive()
-    drive.upload_file(file=file, name=file.filename, mime_type=file.content_type)
-    # file_work = FileWork()
-    # file_work.create_file(file=file, filename=file.filename)
-
-    cats_response = requests.get(url=f'{cats_status_code_url}201')
-    return 201
-
-
-@app.get('/get_file', tags=['Posts'])
-async def get_file(filename: str):
-    drive = Drive()
-    return drive.get_file_by_name(name=filename)
-
-
-@app.get('/get_all_files', tags=['Posts'])
-async def get_all_files():
-    drive = Drive()
-    return drive.get_all_files()
+# @app.post('/upload_file', tags=['Posts'])
+# async def upload_file(file: UploadFile = File(...)):
+#     drive = Drive()
+#     drive.upload_file(file=file, name=file.filename, mime_type=file.content_type)
+#     # file_work = FileWork()
+#     # file_work.create_file(file=file, filename=file.filename)
+#
+#     cats_response = requests.get(url=f'{cats_status_code_url}201')
+#     return 201
+#
+#
+# @app.get('/get_file', tags=['Posts'])
+# async def get_file(filename: str):
+#     drive = Drive()
+#     return drive.get_file_by_name(name=filename)
+#
+#
+# @app.get('/get_all_files', tags=['Posts'])
+# async def get_all_files():
+#     drive = Drive()
+#     return drive.get_all_files()
 
 
 
