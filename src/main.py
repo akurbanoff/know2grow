@@ -117,7 +117,7 @@ app.include_router(
 app.include_router(
     auth_router.get_oauth_router(google_oauth_client, auth_backend, SECRET),
     prefix="/auth/google",
-    tags=["auth"],
+    tags=["Auth"],
 )
 
 app.include_router(

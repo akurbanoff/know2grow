@@ -38,6 +38,6 @@ def get_edu_temp(request: Request, edu_posts = Depends(get_edu_posts)):
                                                         'edu_buttons': edu_buttons, 'edu_news': edu_posts})
 
 
-@router.post('/auth/register')
+@router.post('/register')
 def get_reg_temp(request: Request):
     return templates.TemplateResponse('register.html', {'request': request, 'title': 'Регистрация', 'buttons': buttons})

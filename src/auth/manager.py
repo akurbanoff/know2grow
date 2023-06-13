@@ -8,16 +8,17 @@ from starlette.requests import Request
 from starlette.responses import Response
 from src.auth.models import User
 from src.auth.schemas import UserCreate
-from src.config import SECRET
+from src.config import SECRET, CLIENT_SECRET, CLIENT_ID
 from src.utils import get_user_db
 import hashlib
 from src.background_tasks import send_hello_to_new_user
 
 google_oauth_client = GoogleOAuth2(
-    client_secret='client_secret_1079250209238-ugnen9qhn3f7s43cl1ur0tigqdcinimg.apps.googleusercontent.com.json',
-    client_id='1079250209238-ugnen9qhn3f7s43cl1ur0tigqdcinimg.apps.googleusercontent.com'
+    client_secret=CLIENT_SECRET,
+    client_id='1079250209238-ugnen9qhn3f7s43cl1ur0tigqdcinimg.apps.googleusercontent.com',
+    scopes=["https://www.googleapis.com/auth/user.emails.read", "https://www.googleapis.com/auth/userinfo.profile"]
+    #scopes=['profile'] #https://www.googleapis.com/auth/userinfo.email
 )
-
 
 class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
     reset_password_token_secret = SECRET
