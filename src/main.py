@@ -12,7 +12,7 @@ from starlette.staticfiles import StaticFiles
 
 from src.auth.manager import google_oauth_client
 from src.auth.routers import router as auth_router
-from src.config import SECRET
+from src.config import SECRET, SENTRY_CDN
 from src.static.assets.text import cats_status_code_url
 from src.static.routers import router as template_router
 from src.crypto_news.routers import router as crypto_news_router
@@ -31,13 +31,25 @@ import requests
 from redis import asyncio as aio_redis
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
+import sentry_sdk
 
+
+sentry_sdk.init(
+    dsn=SENTRY_CDN,
+
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    # We recommend adjusting this value in production,
+    traces_sample_rate=1.0,
+)
+
+# logging.basicConfig(level=logging.INFO, filename="app.log",filemode="w",
+#                     format="%(asctime)s %(levelname)s %(message)s")
 
 app = FastAPI(
     title='know2grow',
     version='0.0.1'
 )
-
 # app.mount('/admin', admin_app)
 
 app.mount('/static', StaticFiles(directory='static'), name='static')
