@@ -1,5 +1,6 @@
 import os
-
+from src.google_api import drive
+from src.file_work import FileWork
 import uvicorn
 from drive import Client
 from fastapi import FastAPI, Depends, UploadFile, File, HTTPException
@@ -8,7 +9,6 @@ from fastapi_admin import enums
 from fastapi_admin.resources import Link, Dropdown, Model, Field
 from fastapi_admin.widgets import filters, displays
 from fastapi_users import InvalidPasswordException
-from starlette import status
 from starlette.staticfiles import StaticFiles
 
 from src.auth.manager import google_oauth_client
@@ -17,7 +17,7 @@ from src.config import SECRET, SENTRY_CDN
 from src.static.assets.text import cats_status_code_url
 
 from src.static.routers import router as template_router
-from src.crypto_news.routers import router as crypto_news_router
+from src.crypto_news.routers import router as crypto_news_router, current_user
 from src.education.routers import router as education_router
 from src.binance.router import router as binance_router
 
@@ -171,6 +171,18 @@ app.include_router(
 #     tags=["Auth"],
 # )
 
+@app.get('/profile')
+async def get_profile(user = Depends(current_user)):
+    try:
+        photo = drive.get_file_by_name(name=user.name)
+    except Exception as ex:
+        photo = FileWork().get_file(filename='default_photo.png')
+    data = {
+        'username': user.name,
+        'email': user.email,
+        'photo': photo
+    }
+    return data
 
 @app.post('/auth/change_password', tags=['Auth'])
 async def change_password(email: str, new_password: str):

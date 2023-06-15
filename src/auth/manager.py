@@ -26,7 +26,6 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
 
     async def on_after_register(self, user: User, request: Optional[Request] = None):
         send_hello_to_new_user.delay(user.name)
-        print(f"User {user.id} has registered.")
 
     async def validate_password(
             self,

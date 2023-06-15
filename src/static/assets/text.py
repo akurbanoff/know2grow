@@ -10,3 +10,4 @@ edu_buttons = [
 ]
 
 cats_status_code_url = 'https://http.cat/'
+
