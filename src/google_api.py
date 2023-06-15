@@ -1,21 +1,19 @@
-from drive.client import Client
+import json
+
+from drive import Client
+from fastapi_cache.decorator import cache
+
 from src.file_work import FileWork
 
-client = Client(credentials_path='./google_drive/know2grow-secret-key.json') #./google_drive/
 
-# d = client.root()
-#d.create_folder(name='know2grow')
-# know2grow = d.get_or_create_folder(name='know2grow')
-# for i in d.list():
-#     print(i.name)
-#     for j in i.list():
-#         print(j.name)
 
 
 class Drive:
+    client = Client(credentials_path='../know2grow-secret-key.json')
+
     def __init__(self):
-        self.drive = client
-        self.client_root = client.root()
+        self.drive = Drive.client
+        self.client_root = Drive.client.root()
         self.file_work = FileWork()
 
     def get_file_by_name(self, name):
@@ -30,12 +28,25 @@ class Drive:
 
         return 200
 
+    @cache(expire=60)
     def get_all_files(self):
         files = {}
         for dir in self.client_root.list():
             for file in dir.list():
                 files[file.name] = file
-
         return files
 
+    def delete_file(self, filename):
+        for dir in self.client_root.list():
+            for file in dir.list():
+                if file.name == filename:
+                    file.unlink()
+                    return 200
+        return f'Имя файла - {filename} неправильное. Имя файла вводится вместе с его форматом(filename.png)'
+
 drive = Drive()
+# d = drive.client_root
+# for i in d.list():
+#     print(i.name)
+#     for j in i.list():
+#         print(j.name)

@@ -1,10 +1,10 @@
 import requests
 from fastapi import APIRouter, File, UploadFile
-from sqlalchemy import insert, select, LargeBinary
-from src.file_work import FileWork
+from fastapi.responses import JSONResponse
+from sqlalchemy import insert, select
 from src.auth.models import PostClass
 from src.database import engine
-from src.google_drive.google_api import Drive, drive
+from src.google_api import drive
 from src.static.assets.text import cats_status_code_url
 
 router = APIRouter(
@@ -58,7 +58,7 @@ async def get_edu_posts():
 
 @router.post('/upload_file')
 async def upload_file(file: UploadFile = File(...)):
-    drive.upload_file(file=file, name=file.filename, mime_type=file.content_type)
+    await drive.upload_file(file=file, name=file.filename, mime_type=file.content_type)
     # file_work = FileWork()
     # file_work.create_file(file=file, filename=file.filename)
 
@@ -74,5 +74,9 @@ async def get_file(filename: str):
 
 @router.get('/get_all_files')
 async def get_all_files():
-    response = drive.get_all_files()
+    response = await drive.get_all_files()
     return response
+
+@router.get('/delete_file')
+async def delete_file_by_name(filename):
+    return drive.delete_file(filename=filename)

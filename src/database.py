@@ -11,7 +11,6 @@ Base = declarative_base()
 engine = create_async_engine(url=db_url)
 session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
-
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     async with session() as s:
         return s
