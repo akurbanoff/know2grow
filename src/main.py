@@ -1,7 +1,3 @@
-import os
-import re
-from src.google_api import drive
-from src.file_work import FileWork
 import uvicorn
 from drive import Client
 from fastapi import FastAPI, Depends, UploadFile, File, HTTPException
@@ -15,22 +11,15 @@ from starlette.staticfiles import StaticFiles
 from src.auth.google_oauth_client import google_oauth_client
 from src.auth.routers import router as auth_router
 from src.config import SECRET, SENTRY_CDN
-from src.static.assets.text import cats_status_code_url
 
 from src.static.routers import router as template_router
 from src.crypto_news.routers import router as crypto_news_router
 from src.education.routers import router as education_router
 from src.binance.router import router as binance_router
+from src.auth.account_router import account_router
 
 from src.auth.auth import auth_backend
 from src.auth.schemas import UserRead, UserCreate
-from src.file_work import FileWork
-from src.database import session, engine
-from sqlalchemy import select, update, insert
-from src.auth.models import User, PostClass, Admin, OAuthAccount
-from passlib.hash import bcrypt
-import bcrypt
-import requests
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 import sentry_sdk
@@ -150,6 +139,10 @@ app.include_router(
     binance_router
 )
 
+app.include_router(
+    account_router
+)
+
 
 # app.include_router(
 #     auth_router.get_reset_password_router(),
@@ -169,83 +162,6 @@ app.include_router(
 #     prefix="/auth/associate/google",
 #     tags=["Auth"],
 # )
-
-
-@app.get('/profile')
-async def get_profile(user = Depends(current_user)):
-    try:
-        photo = drive.get_file_by_name(name=user.name)
-    except Exception as ex:
-        photo = FileWork().get_file(filename='default_photo.png')
-    data = {
-        'username': user.name,
-        'email': user.email,
-        'photo': photo
-    }
-    return data
-
-
-@app.post('/auth/change_password', tags=['Auth'])
-async def change_password(email: str, new_password: str):
-    '''
-    Смена пароля с хэшированием.
-
-    Параметры:
-    - email(str): ввод почты, по которой будет браться юзер и меняться пароль
-    - new_password(str): длина больше 8 без @ или эл почты в пароле, также должен быть хоть 1 символ в верхнем регистре.
-
-    Return:
-    - 200 OK
-    '''
-
-    rounds = 12
-    salt = b'$2b$12$.......................'
-
-    if len(new_password) < 8:
-        raise InvalidPasswordException(
-            reason="Пароль должен быть длиннее 8 символов."
-        )
-    if new_password.count('@') >= 1:
-        raise InvalidPasswordException(
-            reason="Пароль не должен быть равен электронной почте."
-        )
-    if new_password.islower():
-        raise InvalidPasswordException(
-            reason='Пароль должен содержать символы как в нижнем, так и в верхнем регистре.'
-        )
-
-    new_password = new_password.encode('utf-8')
-    password = bcrypt.hashpw(password=new_password, salt=salt)
-
-    async with session() as conn:
-        stmt = update(User).values(hashed_password=password.decode('utf-8')).where(User.email == email)
-        await conn.execute(stmt)
-        await conn.commit()
-
-    cats_response = requests.get(url=f'{cats_status_code_url}200')
-    return 200
-
-
-@app.post('/auth/change_name')
-async def change_name(new_name: str, user=Depends(current_user)):
-    async with engine.begin() as db:
-        stmt = update(User).values(name=new_name).where(User.email == user.email)
-        await db.execute(stmt)
-        await db.commit()
-    return f'Вы изменили {user.name} на {new_name}.'
-
-
-@app.post('/auth/change_email')
-async def change_email(new_email, user = Depends(current_user)):
-    if not validate_email.validate_email(email=new_email):
-        return 'Указанный адрес почты недействителен либо вы совершили ошибку. Пожалуйста введите адрес почты в формате example@something.ru'
-
-    async with engine.begin() as db:
-        stmt = update(User).values(email=new_email).where(User.name == user.name)
-        await db.execute(stmt)
-        await db.commit()
-    return f'Вы сменили {user.email} на {new_email}'
-
 
 if __name__ == "__main__":
     uvicorn.run("src.main:app", host="127.0.0.1", log_level="info")
