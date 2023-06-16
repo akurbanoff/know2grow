@@ -1,19 +1,10 @@
-from typing import List
-
-from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import relationship
 from sqlalchemy import Column, String, Integer, BINARY, LargeBinary
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTable
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseOAuthAccountTable
 from sqlalchemy import Column, Integer, ForeignKey
-from sqlalchemy.orm import declared_attr
-from src.config import CLIENT_ID, CLIENT_SECRET
 from src.database import Base
-from httpx_oauth.clients.google import GoogleOAuth2
 
-#oauth_scheme = OAuth2PasswordBearer(tokenUrl='token')
-
-#google_oauth_client = GoogleOAuth2(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
 
 class OAuthAccount(SQLAlchemyBaseOAuthAccountTable[int], Base):
     id = Column(Integer, primary_key=True)

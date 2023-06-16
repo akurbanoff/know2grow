@@ -1,4 +1,5 @@
 import os
+import re
 from src.google_api import drive
 from src.file_work import FileWork
 import uvicorn
@@ -11,13 +12,13 @@ from fastapi_admin.widgets import filters, displays
 from fastapi_users import InvalidPasswordException
 from starlette.staticfiles import StaticFiles
 
-from src.auth.manager import google_oauth_client
+from src.auth.google_oauth_client import google_oauth_client
 from src.auth.routers import router as auth_router
 from src.config import SECRET, SENTRY_CDN
 from src.static.assets.text import cats_status_code_url
 
 from src.static.routers import router as template_router
-from src.crypto_news.routers import router as crypto_news_router, current_user
+from src.crypto_news.routers import router as crypto_news_router
 from src.education.routers import router as education_router
 from src.binance.router import router as binance_router
 
@@ -34,10 +35,11 @@ from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 import sentry_sdk
 from redis import asyncio as aio_redis
+import validate_email
+from src.auth.current_user import current_user
 
 sentry_sdk.init(
     dsn=SENTRY_CDN,
-
     # Set traces_sample_rate to 1.0 to capture 100%
     # of transactions for performance monitoring.
     # We recommend adjusting this value in production,
@@ -54,14 +56,13 @@ app = FastAPI(
 
 # app.mount('/admin', admin_app)
 
-app.mount('/static', StaticFiles(directory='static'), name='static')
+#app.mount('/static', StaticFiles(directory='static'), name='static')
 
 #
 # login_provider = UsernamePasswordProvider(
 #     admin_model=Admin,
 #     login_logo_url="https://preview.tabler.io/static/logo.svg"
 # )
-
 
 
 @app.on_event('startup')
@@ -115,7 +116,6 @@ async def take_redis():
 #     resources = [UserResource, OAuthAccountResource, PostResource]
 
 
-
 app.include_router(
     auth_router.get_auth_router(auth_backend),
     prefix='/auth/jwt',
@@ -151,7 +151,6 @@ app.include_router(
 )
 
 
-
 # app.include_router(
 #     auth_router.get_reset_password_router(),
 #     prefix='/auth',
@@ -171,6 +170,7 @@ app.include_router(
 #     tags=["Auth"],
 # )
 
+
 @app.get('/profile')
 async def get_profile(user = Depends(current_user)):
     try:
@@ -183,6 +183,7 @@ async def get_profile(user = Depends(current_user)):
         'photo': photo
     }
     return data
+
 
 @app.post('/auth/change_password', tags=['Auth'])
 async def change_password(email: str, new_password: str):
@@ -224,6 +225,26 @@ async def change_password(email: str, new_password: str):
     cats_response = requests.get(url=f'{cats_status_code_url}200')
     return 200
 
+
+@app.post('/auth/change_name')
+async def change_name(new_name: str, user=Depends(current_user)):
+    async with engine.begin() as db:
+        stmt = update(User).values(name=new_name).where(User.email == user.email)
+        await db.execute(stmt)
+        await db.commit()
+    return f'Вы изменили {user.name} на {new_name}.'
+
+
+@app.post('/auth/change_email')
+async def change_email(new_email, user = Depends(current_user)):
+    if not validate_email.validate_email(email=new_email):
+        return 'Указанный адрес почты недействителен либо вы совершили ошибку. Пожалуйста введите адрес почты в формате example@something.ru'
+
+    async with engine.begin() as db:
+        stmt = update(User).values(email=new_email).where(User.name == user.name)
+        await db.execute(stmt)
+        await db.commit()
+    return f'Вы сменили {user.email} на {new_email}'
 
 
 if __name__ == "__main__":

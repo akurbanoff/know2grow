@@ -4,12 +4,12 @@ import requests
 from fastapi import APIRouter, Depends
 from src.auth.routers import router as auth_router
 from src.config import CRYPTO_PANIC_API
+from src.auth.current_user import current_user
 
 router = APIRouter(
     tags=["News"]
 )
 
-current_user = auth_router.current_user()
 
 @router.get('/get_crypto_news')
 async def get_crypto_news(get_all: bool = False, currency: str = None, get_by_tag: str = None,

@@ -9,23 +9,17 @@ from starlette.responses import Response
 from src.auth.models import User
 from src.auth.schemas import UserCreate
 from src.config import SECRET, CLIENT_SECRET, CLIENT_ID
-from src.utils import get_user_db
 import hashlib
 from src.background_tasks import send_hello_to_new_user
+from src.utils import get_user_db
 
-google_oauth_client = GoogleOAuth2(
-    client_secret=CLIENT_SECRET,
-    client_id='1079250209238-ugnen9qhn3f7s43cl1ur0tigqdcinimg.apps.googleusercontent.com',
-    scopes=["https://www.googleapis.com/auth/user.emails.read", "https://www.googleapis.com/auth/userinfo.profile"]
-    #scopes=['profile'] #https://www.googleapis.com/auth/userinfo.email
-)
 
 class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
     reset_password_token_secret = SECRET
     verification_token_secret = SECRET
 
     async def on_after_register(self, user: User, request: Optional[Request] = None):
-        send_hello_to_new_user.delay(user.name)
+        send_hello_to_new_user.delay(user.name, user.email)
 
     async def validate_password(
             self,
@@ -81,8 +75,6 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
         await self.on_after_register(created_user, request)
 
         return created_user
-
-
 
 async def get_user_manager(user_db=Depends(get_user_db)):
     yield UserManager(user_db)
