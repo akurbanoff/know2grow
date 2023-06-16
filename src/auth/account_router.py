@@ -18,6 +18,12 @@ account_router = APIRouter(
 
 @account_router.get('/profile')
 async def get_profile(user = Depends(current_user)):
+    '''
+    Получение данных о пользователе, а именно:
+    - username
+    - email
+    - photo
+    '''
     try:
         photo = drive.get_file_by_name(name=user.name)
     except Exception as ex:
@@ -38,9 +44,6 @@ async def change_password(email: str, new_password: str):
     Параметры:
     - email(str): ввод почты, по которой будет браться юзер и меняться пароль
     - new_password(str): длина больше 8 без @ или эл почты в пароле, также должен быть хоть 1 символ в верхнем регистре.
-
-    Return:
-    - 200 OK
     '''
 
     rounds = 12
@@ -73,6 +76,9 @@ async def change_password(email: str, new_password: str):
 
 @account_router.post('/auth/change_name')
 async def change_name(new_name: str, user=Depends(current_user)):
+    '''
+    Смена имени пользователя по email.
+    '''
     async with engine.begin() as db:
         stmt = update(User).values(name=new_name).where(User.email == user.email)
         await db.execute(stmt)
@@ -82,6 +88,9 @@ async def change_name(new_name: str, user=Depends(current_user)):
 
 @account_router.post('/auth/change_email')
 async def change_email(new_email, user = Depends(current_user)):
+    '''
+    Смена email по имени пользователя.
+    '''
     if not validate_email.validate_email(email=new_email):
         return 'Указанный адрес почты недействителен либо вы совершили ошибку. Пожалуйста введите адрес почты в формате example@something.ru'
 

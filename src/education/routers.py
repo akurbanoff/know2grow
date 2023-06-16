@@ -58,6 +58,9 @@ async def get_edu_posts():
 
 @router.post('/upload_file')
 async def upload_file(file: UploadFile = File(...)):
+    '''
+    Загрузка файла любого формата.
+    '''
     await drive.upload_file(file=file, name=file.filename, mime_type=file.content_type)
     # file_work = FileWork()
     # file_work.create_file(file=file, filename=file.filename)
@@ -68,15 +71,24 @@ async def upload_file(file: UploadFile = File(...)):
 
 @router.get('/get_file')
 async def get_file(filename: str):
+    '''
+    Получение файла из гугл диска по его имени. Имя включает также и расширение файла.
+    '''
     response = drive.get_file_by_name(name=filename)
     return response
 
 
 @router.get('/get_all_files')
 async def get_all_files():
+    '''
+    Получение всех файлов, которые есть.
+    '''
     response = await drive.get_all_files()
     return response
 
 @router.get('/delete_file')
 async def delete_file_by_name(filename):
+    '''
+    Удаление файла по имени
+    '''
     return drive.delete_file(filename=filename)
