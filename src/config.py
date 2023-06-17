@@ -9,6 +9,9 @@ DB_HOST = os.environ.get('DB_HOST')
 DB_NAME = os.environ.get('DB_NAME')
 DB_PORT = os.environ.get('DB_PORT')
 
+REDIS_PORT = os.environ.get('REDIS_PORT')
+REDIS_HOST = os.environ.get('REDIS_HOST')
+
 SECRET = os.environ.get('SECRET')
 CLIENT_ID = os.environ.get('CLIENT_ID')
 CLIENT_SECRET = os.environ.get('CLIENT_SECRET')

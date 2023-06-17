@@ -6,10 +6,8 @@ from fastapi_cache.decorator import cache
 from src.file_work import FileWork
 
 
-
-
 class Drive:
-    client = Client(credentials_path='../know2grow-secret-key.json')
+    client = Client(credentials_path='./src/know2grow-secret-key.json')
 
     def __init__(self):
         self.drive = Drive.client
@@ -22,7 +20,7 @@ class Drive:
     def upload_file(self,  name, mime_type, file, parent_dir_id = '1pMx7TQI03bfbBUnuPVJVuMtKk2D88scp'):
         self.file_work.create_file(file=file, filename=name)
         self.drive.upload_file(
-            parent_id=parent_dir_id, name=name, mime_type=mime_type, path=f'../media/{name}'
+            parent_id=parent_dir_id, name=name, mime_type=mime_type, path=f'./media/{name}'
         )
         self.file_work.delete_file(filename=name)
 

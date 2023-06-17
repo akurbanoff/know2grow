@@ -37,7 +37,7 @@ async def get_profile(user = Depends(current_user)):
 
 
 @account_router.post('/auth/change_password')
-async def change_password(email: str, new_password: str):
+async def change_password(new_password: str, user = Depends(current_user)):
     '''
     Смена пароля с хэшированием.
 
@@ -66,7 +66,7 @@ async def change_password(email: str, new_password: str):
     password = bcrypt.hashpw(password=new_password, salt=salt)
 
     async with session() as conn:
-        stmt = update(User).values(hashed_password=password.decode('utf-8')).where(User.email == email)
+        stmt = update(User).values(hashed_password=password.decode('utf-8')).where(User.email == user.email)
         await conn.execute(stmt)
         await conn.commit()
 

@@ -56,7 +56,7 @@ app = FastAPI(
 
 @app.on_event('startup')
 async def take_redis():
-    redis = aio_redis.from_url("redis://localhost", encoding="utf8", decode_responses=True)
+    redis = aio_redis.from_url("redis://localhost:6379", encoding="utf8", decode_responses=True)
     FastAPICache.init(RedisBackend(redis), prefix='fastapi-cache')
 
     # await admin_app.configure(
@@ -163,5 +163,5 @@ app.include_router(
 #     tags=["Auth"],
 # )
 
-if __name__ == "__main__":
-    uvicorn.run("src.main:app", host="127.0.0.1", log_level="info")
+# if __name__ == "__main__":
+#     uvicorn.run("src.main:app", host="127.0.0.1", log_level="info")

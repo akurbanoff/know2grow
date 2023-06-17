@@ -61,7 +61,7 @@ async def upload_file(file: UploadFile = File(...)):
     '''
     Загрузка файла любого формата.
     '''
-    await drive.upload_file(file=file, name=file.filename, mime_type=file.content_type)
+    drive.upload_file(file=file, name=file.filename, mime_type=file.content_type)
     # file_work = FileWork()
     # file_work.create_file(file=file, filename=file.filename)
 

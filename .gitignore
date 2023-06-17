@@ -4,9 +4,10 @@ __pycache__
 .mypy_cache
 .pytest_cache
 .env
+.env-prod
 actual_work_info.md
 src/auth/client_secret_1079250209238-ugnen9qhn3f7s43cl1ur0tigqdcinimg.apps.googleusercontent.com.json
-know2grow-secret-key.json
+src/know2grow-secret-key.json
 alembic.ini
 /migrations/
 pyproject.toml

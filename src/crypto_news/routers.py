@@ -1,10 +1,10 @@
 import datetime
-
 import requests
 from fastapi import APIRouter, Depends
 from src.auth.routers import router as auth_router
 from src.config import CRYPTO_PANIC_API
 from src.auth.current_user import current_user
+
 
 router = APIRouter(
     tags=["News"]
