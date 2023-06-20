@@ -1,0 +1,52 @@
+version: '2.17.2'
+services:
+  db:
+    image: postgres:14.8
+    container_name: database
+    command: -p 5430
+    expose:
+      - 5430
+    env_file:
+      - .env-prod
+
+  redis:
+    image: redis:6.0.16
+    container_name: redis
+    command: --port 6370
+    expose:
+      - 6370
+
+  app:
+    build:
+      context: .
+    env_file:
+      - .env-prod
+    container_name: application
+    command: ['/know2grow/docker/app.sh']
+    ports:
+      - 7777:8000
+    depends_on:
+      - db
+      - redis
+
+  celery:
+    build:
+      context: .
+    container_name: celery
+    env_file:
+      - .env-prod
+    command: ['/know2grow/docker/celery.sh', 'celery']
+    depends_on:
+      - redis
+  flower:
+    build:
+      context: .
+    container_name: flower
+    env_file:
+      - .env-prod
+    command: [ '/know2grow/docker/celery.sh', 'flower' ]
+    depends_on:
+      - redis
+      - celery
+    ports:
+      - 8888:5555

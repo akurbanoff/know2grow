@@ -4,7 +4,7 @@ from email.message import EmailMessage
 from celery import Celery
 from src.config import SMTP_HOST, SMTP_PORT, SMTP_USER, KNOW2GROW_SMTP_PASS, REDIS_PORT, REDIS_HOST
 
-celery = Celery('tasks', broker='redis://localhost:6379')#{REDIS_HOST}:{REDIS_PORT}')
+celery = Celery('tasks', broker=f'redis://{REDIS_HOST}:{REDIS_PORT}')
 
 
 def send_hello_email_message(username: str, user_email):

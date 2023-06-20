@@ -11,6 +11,7 @@ router = APIRouter(
     tags=["Education"]
 )
 
+
 @router.post('/add_new_edu_post')
 async def add_new_edu_info(title: str, links: str, summary: str, photo: UploadFile = File(...)):
     '''
@@ -86,7 +87,8 @@ async def get_all_files():
     response = await drive.get_all_files()
     return response
 
-@router.get('/delete_file')
+
+@router.delete('/delete_file')
 async def delete_file_by_name(filename):
     '''
     Удаление файла по имени

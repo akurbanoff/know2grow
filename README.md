@@ -31,6 +31,12 @@
 - SMTP_... - это данные связанные с гугл почтой для реализации отправки сообщений через celery
 - Sentry - для отслеживания логов
 
+Этапы запуска:
+  - git clone git@github.com:Uspesh/know2grow.git
+  - pip install -r requirements.txt
+  - docker compose build
+  - docker compose up
+
 P.S. все названия переменных окружения находятся в файле config.py
 
 ### Используемые технологии

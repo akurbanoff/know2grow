@@ -36,7 +36,7 @@ async def get_profile(user = Depends(current_user)):
     return data
 
 
-@account_router.post('/auth/change_password')
+@account_router.patch('/auth/change_password')
 async def change_password(new_password: str, user = Depends(current_user)):
     '''
     Смена пароля с хэшированием.
@@ -74,7 +74,7 @@ async def change_password(new_password: str, user = Depends(current_user)):
     return 200
 
 
-@account_router.post('/auth/change_name')
+@account_router.patch('/auth/change_name')
 async def change_name(new_name: str, user=Depends(current_user)):
     '''
     Смена имени пользователя по email.
@@ -86,7 +86,7 @@ async def change_name(new_name: str, user=Depends(current_user)):
     return f'Вы изменили {user.name} на {new_name}.'
 
 
-@account_router.post('/auth/change_email')
+@account_router.patch('/auth/change_email')
 async def change_email(new_email, user = Depends(current_user)):
     '''
     Смена email по имени пользователя.

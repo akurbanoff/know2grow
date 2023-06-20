@@ -10,7 +10,7 @@ from starlette.staticfiles import StaticFiles
 
 from src.auth.google_oauth_client import google_oauth_client
 from src.auth.routers import router as auth_router
-from src.config import SECRET, SENTRY_CDN
+from src.config import SECRET, SENTRY_CDN, REDIS_HOST, REDIS_PORT
 
 from src.static.routers import router as template_router
 from src.crypto_news.routers import router as crypto_news_router
@@ -56,7 +56,7 @@ app = FastAPI(
 
 @app.on_event('startup')
 async def take_redis():
-    redis = aio_redis.from_url("redis://localhost:6379", encoding="utf8", decode_responses=True)
+    redis = aio_redis.from_url(f"redis://{REDIS_HOST}:{REDIS_PORT}", encoding="utf8", decode_responses=True)
     FastAPICache.init(RedisBackend(redis), prefix='fastapi-cache')
 
     # await admin_app.configure(
