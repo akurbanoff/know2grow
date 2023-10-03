@@ -107,7 +107,7 @@ typing_extensions==4.5.0
 tzlocal==5.0.1
 ujson==5.7.0
 uritemplate==4.1.1
-urllib3==1.26.16
+urllib3==1.26.17
 uvicorn==0.22.0
 uvloop==0.17.0
 validate-email==1.3
