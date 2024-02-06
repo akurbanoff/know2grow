@@ -28,7 +28,7 @@ drive==0.4.1
 ecdsa==0.18.0
 email-validator==2.0.0.post2
 et-xmlfile==1.1.0
-fastapi==0.95.2
+fastapi==0.109.1
 fastapi-admin==1.0.4
 fastapi-cache2==0.2.1
 fastapi-users==11.0.0
